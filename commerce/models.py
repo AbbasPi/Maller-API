@@ -1,6 +1,5 @@
 import uuid
 from PIL import Image
-from django.core import validators
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.contrib.auth import get_user_model
@@ -24,16 +23,14 @@ class Product(Entity):
     qty = models.DecimalField('qty', max_digits=10, decimal_places=2)
     price = models.DecimalField('price', max_digits=10, decimal_places=2)
     cost = models.DecimalField('cost', max_digits=10, decimal_places=2)
-    discounted_price = models.DecimalField('discounted price', max_digits=10, decimal_places=2)
+    discounted_price = models.DecimalField('discounted price', max_digits=10, decimal_places=2, null=True, blank=True)
     is_featured = models.BooleanField('is featured')
     is_active = models.BooleanField('is active')
     vendor = models.ForeignKey('account.Vendor', verbose_name='vendor', related_name='products',
                                on_delete=models.SET_NULL,
                                null=True, blank=True)
     category = models.ForeignKey('commerce.Category', verbose_name='category', related_name='products',
-                                 null=True,
-                                 blank=True,
-                                 on_delete=models.SET_NULL)
+                                 blank=True, null=True, on_delete=models.CASCADE)
     merchant = models.ForeignKey('commerce.Merchant', verbose_name='merchant', related_name='products',
                                  null=True,
                                  blank=True,
@@ -47,17 +44,17 @@ class Product(Entity):
 
 class ProductRating(Entity):
     rate = models.FloatField(validators=[MinValueValidator(0.0), MaxValueValidator(5.0)])
-    product = models.ForeignKey('commerce.Product', on_delete=models.CASCADE)
+    product = models.ForeignKey('commerce.Product', on_delete=models.CASCADE, related_name='product_rating')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
 
 class VendorRating(Entity):
-    rate = models.FloatField(validators=[MinValueValidator(0.0), MaxValueValidator(5.0)])
-    vendor = models.ForeignKey('account.Vendor', on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    rate = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(5)])
+    vendor = models.ForeignKey('account.Vendor', on_delete=models.CASCADE, related_name='vendor_rating')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='vendor_rating')
 
     def __str__(self):
-        return self.vendor.name
+        return self.vendor.user.first_name
 
 
 class Order(Entity):
@@ -65,7 +62,7 @@ class Order(Entity):
                              on_delete=models.CASCADE)
     address = models.ForeignKey('commerce.Address', verbose_name='address', null=True, blank=True,
                                 on_delete=models.CASCADE)
-    total = models.DecimalField('total', blank=True, null=True, max_digits=1000, decimal_places=0)
+    total = models.DecimalField('total', blank=True, null=True, max_digits=10, decimal_places=0)
     status = models.ForeignKey('commerce.OrderStatus', verbose_name='status', related_name='orders',
                                on_delete=models.CASCADE)
     note = models.CharField('note', null=True, blank=True, max_length=255)
@@ -74,7 +71,7 @@ class Order(Entity):
     items = models.ManyToManyField('commerce.Item', verbose_name='items', related_name='order')
 
     def __str__(self):
-        return f'{self.user.first_name} + {self.total}'
+        return f'{self.user.first_name} + {self.order_total}'
 
     @property
     def order_total(self):
@@ -169,7 +166,6 @@ class ProductImage(Entity):
             output_size = (500, 500)
             img.thumbnail(output_size)
             img.save(self.image.path)
-            # print(self.image.path)
 
 
 class Label(Entity):
@@ -212,3 +208,7 @@ class Address(Entity):
 
     def __str__(self):
         return f'{self.user.first_name} - {self.address1} - {self.address2} - {self.phone}'
+
+    class Meta:
+        verbose_name = 'Address'
+        verbose_name_plural = 'Addresses'

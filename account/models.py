@@ -75,14 +75,30 @@ class User(AbstractUser, Entity):
 
 
 class Vendor(Entity):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    name = models.CharField('name', max_length=255, default='')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='vendors')
     image = models.ImageField('image', upload_to='vendor/')
-    phone_number = models.CharField('phone number', max_length=14, default='')
-    email = models.EmailField('email', max_length=254, null=True, blank=True)
-    social_media = models.CharField('social media', max_length=500, null=True, blank=True)
+    description = models.CharField('description', max_length=1000, null=True, blank=True)
+
     def __str__(self):
-        return self.name
+        return self.user.first_name
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        img = Image.open(self.image.path)
+        if img.height > 500 or img.width > 500:
+            output_size = (500, 500)
+            img.thumbnail(output_size)
+            img.save(self.image.path)
+
+
+class Customer(Entity):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customers')
+    image = models.ImageField('image', upload_to='customer/')
+
+    def __str__(self):
+        return self.user.first_name
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None, *args, **kwargs):

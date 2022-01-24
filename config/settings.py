@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
-
 import pretty_errors
 import os
 
@@ -56,6 +55,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'commerce',
     'account',
+    'django_simple_coupons',
 ]
 
 MIDDLEWARE = [

@@ -1,9 +1,12 @@
 asgiref==3.4.1
 django-ninja==0.16.1
-Django==4.0.1
+Django==3.2.8
 pip==21.2.3
 pydantic==1.8.2
 setuptools==57.4.0
 sqlparse==0.4.2
 typing-extensions==4.0.1
 tzdata==2021.5
+
+Pillow~=9.0.0
+python-jose==3.3.0
