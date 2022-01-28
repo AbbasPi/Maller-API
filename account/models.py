@@ -30,6 +30,7 @@ class CustomUserManager(UserManager):
         user.set_password(password)
         user.first_name = first_name
         user.last_name = last_name
+        user.is_customer = True
         user.save(using=self._db)
         return user
 
@@ -53,12 +54,9 @@ class User(AbstractUser, Entity):
     phone_number = models.CharField(max_length=14, null=True, blank=True)
     address1 = models.CharField(max_length=255, null=True, blank=True)
     address2 = models.CharField(max_length=255, null=True, blank=True)
-    company_name = models.CharField(max_length=255, null=True, blank=True)
-    company_website = models.CharField(max_length=255, null=True, blank=True)
-    is_customer = models.BooleanField(default=False)
-    is_vendor = models.BooleanField(default=False)
+    is_customer = models.BooleanField('customer status', default=False)
+    is_vendor = models.BooleanField('vendor status', default=False)
     is_verified = models.BooleanField(default=False)
-    is_blocked = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -76,11 +74,12 @@ class User(AbstractUser, Entity):
 
 class Vendor(Entity):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='vendors')
+    store_name = models.CharField('store name', max_length=255, default='')
     image = models.ImageField('image', upload_to='vendor/')
     description = models.CharField('description', max_length=1000, null=True, blank=True)
 
     def __str__(self):
-        return self.user.first_name
+        return self.store_name
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None, *args, **kwargs):
@@ -92,20 +91,3 @@ class Vendor(Entity):
             img.thumbnail(output_size)
             img.save(self.image.path)
 
-
-class Customer(Entity):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customers')
-    image = models.ImageField('image', upload_to='customer/')
-
-    def __str__(self):
-        return self.user.first_name
-
-    def save(self, force_insert=False, force_update=False, using=None,
-             update_fields=None, *args, **kwargs):
-        super().save(*args, **kwargs)
-
-        img = Image.open(self.image.path)
-        if img.height > 500 or img.width > 500:
-            output_size = (500, 500)
-            img.thumbnail(output_size)
-            img.save(self.image.path)

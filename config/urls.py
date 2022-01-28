@@ -19,18 +19,21 @@ from django.urls import path
 from ninja import NinjaAPI
 
 from account.controllers import account_controller
-from commerce.controllers import product_controller
+from commerce.controllers import product_controller, order_controller, address_controller, category_controller
 from config import settings
 
-api = NinjaAPI()
+maller = NinjaAPI()
 
-api.add_router('product', product_controller)
-api.add_router('auth', account_controller)
+maller.add_router('product', product_controller)
+maller.add_router('order', order_controller)
+maller.add_router('category', category_controller)
+maller.add_router('address', address_controller)
+maller.add_router('auth', account_controller)
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', api.urls),
+    path('maller/', maller.urls),
 ]
 
 

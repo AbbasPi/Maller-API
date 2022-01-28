@@ -42,7 +42,7 @@ class ProductOut(ModelSchema):
     label: LabelOut
     merchant: MerchantOut
     category: CategoryOut
-    product_rating: ProductRatingOut
+    # product_rating: ProductRatingOut = None
 
     class Config:
         model = Product
@@ -56,7 +56,10 @@ class ProductOut(ModelSchema):
                         'category',
                         'label',
                         'merchant',
-
+                        'height',
+                        'width',
+                        'weight',
+                        'length'
                         ]
 
 
@@ -67,7 +70,12 @@ class ProductIn(Schema):
     price: int
     discounted_price: int
     cost: int
-    vendor_id: UUID4
+    height: int
+    width: int
+    weight: int
+    length: int
+    is_active: bool
+    is_featured: bool
     category_id: UUID4
     label_id: UUID4
     merchant_id: UUID4

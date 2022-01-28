@@ -6,7 +6,6 @@ from account.authorization import GlobalAuth, get_tokens_for_user
 from account.schemas import AccountCreate, AuthOut, SigninSchema, AccountOut, AccountUpdate, ChangePasswordSchema
 from commerce.scehmas import MessageOut
 
-
 User = get_user_model()
 
 account_controller = Router(tags=['auth'])
@@ -29,7 +28,6 @@ def signup(request, account_in: AccountCreate):
             email=account_in.email,
             password=account_in.password1,
         )
-
 
         token = get_tokens_for_user(new_user)
 

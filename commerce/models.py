@@ -20,6 +20,10 @@ class Entity(models.Model):
 class Product(Entity):
     name = models.CharField('name', max_length=255)
     description = models.CharField('description', max_length=1000, null=True, blank=True)
+    weight = models.FloatField('weight', null=True, blank=True)
+    width = models.FloatField('width', null=True, blank=True)
+    height = models.FloatField('height', null=True, blank=True)
+    length = models.FloatField('length', null=True, blank=True)
     qty = models.DecimalField('qty', max_digits=10, decimal_places=2)
     price = models.DecimalField('price', max_digits=10, decimal_places=2)
     cost = models.DecimalField('cost', max_digits=10, decimal_places=2)
@@ -43,18 +47,23 @@ class Product(Entity):
 
 
 class ProductRating(Entity):
-    rate = models.FloatField(validators=[MinValueValidator(0.0), MaxValueValidator(5.0)])
-    product = models.ForeignKey('commerce.Product', on_delete=models.CASCADE, related_name='product_rating')
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    rate = models.FloatField(validators=[MinValueValidator(0.0), MaxValueValidator(5.0)], null=True,
+                             blank=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='product_rating')
+    user = models.ManyToManyField(User, related_name='product_rating')
+
+    def __int__(self):
+        return self.product.name
 
 
 class VendorRating(Entity):
-    rate = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(5)])
+    rate = models.FloatField(validators=[MinValueValidator(0.0), MaxValueValidator(5.0)], null=True,
+                             blank=True)
     vendor = models.ForeignKey('account.Vendor', on_delete=models.CASCADE, related_name='vendor_rating')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='vendor_rating')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='vendor_rating')
 
-    def __str__(self):
-        return self.vendor.user.first_name
+    def __int__(self):
+        return self.rate
 
 
 class Order(Entity):
@@ -62,7 +71,6 @@ class Order(Entity):
                              on_delete=models.CASCADE)
     address = models.ForeignKey('commerce.Address', verbose_name='address', null=True, blank=True,
                                 on_delete=models.CASCADE)
-    total = models.DecimalField('total', blank=True, null=True, max_digits=10, decimal_places=0)
     status = models.ForeignKey('commerce.OrderStatus', verbose_name='status', related_name='orders',
                                on_delete=models.CASCADE)
     note = models.CharField('note', null=True, blank=True, max_length=255)

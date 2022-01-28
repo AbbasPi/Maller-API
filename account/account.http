@@ -1,11 +1,14 @@
-POST localhost:8000/api/auth/signup
+POST localhost:8000/maller/auth/signup
 Content-Type: application/json
 Accept: application/json
 
 {
-  "first_name": "new",
-  "last_name": "user",
-  "email": "user111@example.com",
-  "password1": "string!!@@",
-  "password2": "string!!@@"
+    "first_name": "new",
+    "last_name": "user",
+    "email":"abbas@gmail.com",
+    "password1": "aaaaaaaa",
+    "password2": "aaaaaaaa"
+
+
 }
+
