@@ -61,13 +61,16 @@ def list_products(request, *, price_from: int = None, price_to: int = None, vend
     return products_qs
 
 
-@product_controller.get('/{pk}', response=List[ProductRatingOut])
+@product_controller.get('/{pk}', response=List[ProductOut])
 def get_product_by_id(request, pk: UUID4):
-    return Product.objects.filter(Q(product__is_active=True) & Q(product__id=pk))
+    return Product.objects.filter(id=pk)
 
 
 @product_controller.get('', auth=GlobalAuth(), response=List[ProductOut])
 def get_vendor_products(request):
+    """
+    Get the products of the vendor that's currently logged in
+    """
     return Product.objects.filter(vendor__user__id=request.auth['pk'])
 
 

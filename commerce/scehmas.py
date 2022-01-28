@@ -33,16 +33,11 @@ class LabelOut(Schema):
     name: str
 
 
-class ProductRatingOut(Schema):
-    rate: int
-
-
 class ProductOut(ModelSchema):
     vendor: VendorOut
     label: LabelOut
     merchant: MerchantOut
     category: CategoryOut
-    # product_rating: ProductRatingOut = None
 
     class Config:
         model = Product
@@ -107,6 +102,10 @@ class AddressIn(Schema):
     address2: str
     work_address: bool
     phone: int
+
+
+class ProductRatingOut(Schema):
+    rate: int
 
 
 class ProductRatingIn(Schema):

@@ -1,6 +1,6 @@
 from typing import Optional
 from ninja import Schema
-from pydantic import EmailStr, Field
+from pydantic import EmailStr, Field, UUID4
 
 
 class AccountCreate(Schema):
@@ -53,4 +53,7 @@ class ChangePasswordSchema(Schema):
 
 
 class VendorOut(Schema):
-    pass
+    id: UUID4
+    store_name: str
+    description: str
+    image: str
