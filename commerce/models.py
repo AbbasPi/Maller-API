@@ -100,7 +100,7 @@ class Item(Entity):
     ordered = models.BooleanField('ordered', default=False)
 
     def __str__(self):
-        return f''
+        return f'{self.id} - {self.user.first_name} - {self.product.name}'
 
 
 class OrderStatus(Entity):
@@ -162,8 +162,8 @@ class ProductImage(Entity):
     product = models.ForeignKey('commerce.Product', verbose_name='product', related_name='images',
                                 on_delete=models.CASCADE)
 
-    def __str__(self):
-        return str(self.product.name)
+    def __int__(self):
+        return self.id
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None, *args, **kwargs):

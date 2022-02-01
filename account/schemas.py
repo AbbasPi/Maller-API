@@ -57,3 +57,8 @@ class VendorOut(Schema):
     store_name: str
     description: str
     image: str
+
+
+class VendorEdit(Schema):
+    store_name: str
+    description: str

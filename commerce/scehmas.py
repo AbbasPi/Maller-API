@@ -1,6 +1,6 @@
 from typing import List
 from ninja import ModelSchema, Schema
-from pydantic import UUID4
+from pydantic import UUID4, Field
 
 from account.schemas import VendorOut, AccountOut
 from commerce.models import Product, ProductRating, VendorRating, ProductImage, Merchant, Order, \
@@ -29,7 +29,7 @@ class MerchantOut(UUIDSchema):
     name: str
 
 
-class LabelOut(Schema):
+class LabelOut(UUIDSchema):
     name: str
 
 
@@ -58,17 +58,17 @@ class ProductOut(ModelSchema):
                         ]
 
 
-class ProductIn(Schema):
+class ProductCreate(Schema):
     name: str
-    description: str
+    description: str = None
     qty: int
     price: int
-    discounted_price: int
+    discounted_price: int = None
     cost: int
-    height: int
-    width: int
-    weight: int
-    length: int
+    height: int = None
+    width: int = None
+    weight: int = None
+    length: int = None
     is_active: bool
     is_featured: bool
     category_id: UUID4
@@ -77,6 +77,10 @@ class ProductIn(Schema):
 
 
 class CityOut(UUIDSchema):
+    name: str
+
+
+class CityCreate(Schema):
     name: str
 
 
@@ -95,8 +99,7 @@ class AddressOut(ModelSchema):
         ]
 
 
-class AddressIn(Schema):
-    user_id: UUID4
+class AddressCreate(Schema):
     city_id: UUID4
     address1: str
     address2: str
@@ -104,11 +107,11 @@ class AddressIn(Schema):
     phone: int
 
 
-class ProductRatingOut(Schema):
+class ProductRatingOut(UUIDSchema):
     rate: int
 
 
-class ProductRatingIn(Schema):
+class ProductRatingCreate(Schema):
     rate: int
 
 
@@ -116,7 +119,7 @@ class VendorRatingOut(UUIDSchema):
     rate: int
 
 
-class VendorRatingIn(Schema):
+class VendorRatingCreate(Schema):
     rate: int
 
 
@@ -133,4 +136,15 @@ class ItemCreate(Schema):
 
 
 class ItemOut(UUIDSchema, ItemSchema):
+    pass
+
+
+class ImageOut(UUIDSchema):
+    user: UUID4
+    product: str
+    item_qty: int
+    ordered: bool
+
+
+class ImageCreate(ImageOut):
     pass

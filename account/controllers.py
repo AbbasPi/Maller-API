@@ -8,7 +8,7 @@ from commerce.scehmas import MessageOut
 
 User = get_user_model()
 
-account_controller = Router(tags=['auth'])
+account_controller = Router(tags=['Auth'])
 
 
 @account_controller.post('signup', response={
@@ -87,3 +87,5 @@ def change_password(request, password_update_in: ChangePasswordSchema):
     user.set_password(password_update_in.new_password1)
     user.save()
     return {'detail': 'password updated successfully'}
+
+
