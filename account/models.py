@@ -65,12 +65,6 @@ class User(AbstractUser, Entity):
     def __str__(self):
         return self.email
 
-    def has_perm(self, perm, obj=None):
-        return self.is_superuser
-
-    def has_module_perms(self, app_label):
-        return True
-
 
 class Vendor(Entity):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='vendors')
@@ -90,4 +84,3 @@ class Vendor(Entity):
             output_size = (500, 500)
             img.thumbnail(output_size)
             img.save(self.image.path)
-

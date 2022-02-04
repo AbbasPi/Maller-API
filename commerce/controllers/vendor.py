@@ -54,9 +54,7 @@ def get_vendor(request):
     return 404, {'message': 'vendor not found'}
 
 
-
-
-@vendor_controller.put('edit', auth=GlobalAuth(), response={
+@vendor_controller.put('', auth=GlobalAuth(), response={
     200: MessageOut
 })
 def edit_vendor(request, vendor_in: VendorEdit):
@@ -64,9 +62,6 @@ def edit_vendor(request, vendor_in: VendorEdit):
     vendor_data = vendor_in.dict()
     Vendor.objects.filter(user=user_pk).update(**vendor_data, user=user_pk)
     return 200, {'message': 'updated successfully'}
-
-
-
 
 # @vendor_controller.put('add-image', auth=GlobalAuth(), response={
 #     200: MessageOut
