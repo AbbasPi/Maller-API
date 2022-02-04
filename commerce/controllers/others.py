@@ -1,9 +1,13 @@
 from typing import List
 
 from django.contrib.auth import get_user_model
-from ninja import Router
+from django.shortcuts import get_object_or_404
+from ninja import Router, Form, File
+from ninja.files import UploadedFile
+from pydantic import UUID4
 
-from commerce.models import Merchant, Category, Label, ProductImage
+from account.authorization import GlobalAuth
+from commerce.models import Merchant, Category, Label, ProductImage, Product
 from commerce.scehmas import MessageOut, MerchantOut, CategoryOut, LabelOut, ImageOut
 
 User = get_user_model()
@@ -25,15 +29,25 @@ def get_product_image(request):
     return 404, {'message': 'image not found'}
 
 
-# @product_image_controller.post('add', auth=GlobalAuth(), response={
-#     201: ImageOut,
-#     400: MessageOut
-# })
-# def add_image(request, product_id: UUID4, is_default: bool, image_in: UploadedFile = Form(...)):
-#     # vendor_instance = get_object_or_404(Vendor, user__id=request.auth['pk'])
-#     product = get_object_or_404(Product, id=image_in.product_id, vendor__user_id=request.auth['pk'])
-#     image_qs = ProductImage.objects.create(image=image_in, product_id=product.pk, is_default_image=is_default)
-#     return 201, image_qs
+@product_image_controller.get('{pk}', response={
+    200: List[ImageOut],
+    404: MessageOut
+})
+def get_image_by_product_id(request, pk: UUID4):
+    image_qs = ProductImage.objects.filter(product__id=pk)
+    if image_qs:
+        return 200, image_qs
+    return 404, {'message': 'image not found'}
+
+
+@product_image_controller.post('add', auth=GlobalAuth(), response={
+    201: MessageOut,
+    400: MessageOut
+})
+def add_image(request, product_id: UUID4, is_default: bool, image_in: UploadedFile = File(...)):
+    product = get_object_or_404(Product, id=product_id, vendor__user_id=request.auth['pk'])
+    ProductImage.objects.create(image=image_in, product_id=product.pk, is_default_image=is_default)
+    return 201, {'message': 'image added successfully'}
 
 
 @label_controller.get('all', response={
@@ -67,5 +81,3 @@ def get_all_merchants(request):
     if merchant_qs:
         return 200, merchant_qs
     return 404, {'message': 'no merchants found'}
-
-

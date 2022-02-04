@@ -140,10 +140,9 @@ class ItemOut(UUIDSchema, ItemSchema):
 
 
 class ImageOut(UUIDSchema):
-    user: UUID4
-    product: str
-    item_qty: int
-    ordered: bool
+    image: str
+    is_default_image: bool
+    product: ProductOut
 
 
 class ImageCreate(ImageOut):
