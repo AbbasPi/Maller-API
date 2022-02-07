@@ -60,10 +60,10 @@ class VendorRating(Entity):
     rate = models.FloatField(validators=[MinValueValidator(0.0), MaxValueValidator(5.0)], null=True,
                              blank=True)
     vendor = models.ForeignKey('account.Vendor', on_delete=models.CASCADE, related_name='vendor_rating')
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='vendor_rating')
+    user = models.ManyToManyField(User, related_name='vendor_rating')
 
     def __int__(self):
-        return self.rate
+        return self.id
 
 
 class Order(Entity):

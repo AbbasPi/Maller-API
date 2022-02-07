@@ -24,7 +24,7 @@ from commerce.controllers.cart import cart_controller
 from commerce.controllers.city import city_controller
 from commerce.controllers.order import order_controller
 from commerce.controllers.others import category_controller, merchant_controller, product_image_controller, \
-    label_controller
+    label_controller, product_rating_controller, vendor_rating_controller
 from commerce.controllers.product import product_controller
 from commerce.controllers.vendor import vendor_controller
 
@@ -35,8 +35,10 @@ maller = NinjaAPI()
 
 maller.add_router('auth', account_controller)
 maller.add_router('vendor', vendor_controller)
+maller.add_router('vendor-rating', vendor_rating_controller)
 maller.add_router('product', product_controller)
 maller.add_router('product-image', product_image_controller)
+maller.add_router('product-rating', product_rating_controller)
 maller.add_router('cart', cart_controller)
 maller.add_router('order', order_controller)
 maller.add_router('address', address_controller)

@@ -113,6 +113,7 @@ class ProductRatingOut(UUIDSchema):
 
 class ProductRatingCreate(Schema):
     rate: int
+    product_id: UUID4
 
 
 class VendorRatingOut(UUIDSchema):
@@ -121,6 +122,7 @@ class VendorRatingOut(UUIDSchema):
 
 class VendorRatingCreate(Schema):
     rate: int
+    vendor_id: UUID4
 
 
 class ItemSchema(Schema):

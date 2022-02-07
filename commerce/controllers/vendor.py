@@ -2,7 +2,8 @@ from typing import List
 
 from django.contrib.auth import get_user_model
 from django.db.models import Q
-from ninja import Router
+from ninja import Router, File
+from ninja.files import UploadedFile
 from pydantic import UUID4
 
 from account.authorization import GlobalAuth
@@ -63,7 +64,11 @@ def edit_vendor(request, vendor_in: VendorEdit):
     Vendor.objects.filter(user=user_pk).update(**vendor_data, user=user_pk)
     return 200, {'message': 'updated successfully'}
 
-# @vendor_controller.put('add-image', auth=GlobalAuth(), response={
-#     200: MessageOut
-# })
-# def edit_vendor_image(request):
+
+@vendor_controller.put('edit', auth=GlobalAuth(), response={
+    201: MessageOut,
+    400: MessageOut
+})
+def edit_vendor_image(request, image_in: UploadedFile = File(...)):
+    Vendor.objects.filter(user_id=request.auth['pk']).update(image=image_in)
+    return 201, {'message': 'image edited successfully'}

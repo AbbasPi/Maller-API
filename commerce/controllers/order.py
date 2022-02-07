@@ -32,10 +32,10 @@ def create_order(request):
     try:
 
         order = user.orders.prefetch_related('items').get(ordered=False)
-        list_of_productID_in_order = [item['product_id'] for item in order.items.values('product_id')]
+        list_of_product_id_in_order = [item['product_id'] for item in order.items.values('product_id')]
         list_of_difference_items = []
         list_of_intersection_items = [
-            (item, item.item_qty) if item.product_id in list_of_productID_in_order else list_of_difference_items.append(
+            (item, item.item_qty) if item.product_id in list_of_product_id_in_order else list_of_difference_items.append(
                 item.id) for item in user_items]
         Item.objects.filter(id__in=list_of_difference_items).update(ordered=True)
 

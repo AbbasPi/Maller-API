@@ -15,14 +15,6 @@ User = get_user_model()
 
 product_controller = Router(tags=['Products'])
 
-"""
-
-
-Product Endpoints
-
-
-"""
-
 
 @product_controller.get('all', response={
     200: List[ProductOut],
