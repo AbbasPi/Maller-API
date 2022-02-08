@@ -5,16 +5,17 @@ from django.shortcuts import get_object_or_404
 from ninja import Router
 from pydantic import UUID4
 
-from account.authorization import GlobalAuth
+from config.utils.permissions import AuthBearer
 from commerce.models import Address, User, City
-from commerce.scehmas import AddressOut, MessageOut, AddressCreate
+from commerce.schemas import AddressOut, AddressCreate, CityOut, CityCreate
+from config.utils.schemas import MessageOut
 
 User = get_user_model()
 
 address_controller = Router(tags=['Addresses'])
 
 
-@address_controller.get('all', response={
+@address_controller.get('', response={
     200: List[AddressOut],
     404: MessageOut
 })
@@ -25,30 +26,29 @@ def get_addresses(request):
     return 404, {'message': 'No addresses found'}
 
 
-@address_controller.get('user', auth=GlobalAuth(), response={
+@address_controller.get('address', auth=AuthBearer(), response={
     200: AddressOut,
     404: MessageOut
 })
 def get_user_address(request):
-    user_pk = User.objects.get(id=request.auth['pk'])
-    address_qs = Address.objects.get(user_id=user_pk)
+    address_qs = Address.objects.filter(user=request.auth).select_related('city')
     if address_qs:
         return 200, address_qs
     return 404, {'message': 'address not found'}
 
 
-@address_controller.get('{pk}', response={
+@address_controller.get('{pk}', auth=AuthBearer(), response={
     200: AddressOut,
     404: MessageOut
 })
-def get_address_by_id(request, pk: UUID4):
-    address_qs = Address.objects.get(id=pk)
+def retrieve_address(request, pk: UUID4):
+    address_qs = Address.objects.filter(id=pk, user=request.auth).select_related('city')
     if address_qs:
         return 200, address_qs
     return 404, {'message': 'No address found'}
 
 
-@address_controller.post('', auth=GlobalAuth(), response={
+@address_controller.post('', auth=AuthBearer(), response={
     200: AddressOut,
     400: MessageOut
 })
@@ -56,14 +56,13 @@ def create_address(request, address_in: AddressCreate):
     address_data = address_in.dict()
     city_pk = address_data.pop('city_id')
     city_instance = get_object_or_404(City, pk=city_pk)
-    user_pk = User.objects.get(id=request.auth['pk'])
-    address_qs = Address.objects.create(**address_data, user=user_pk, city=city_instance)
+    address_qs = Address.objects.create(**address_data, user=request.auth, city=city_instance)
     if address_qs:
         return 200, address_qs
     return 400, {'message': 'something went wrong'}
 
 
-@address_controller.put('{pk}', auth=GlobalAuth(), response={
+@address_controller.put('{pk}', auth=AuthBearer(), response={
     200: AddressOut,
     400: MessageOut
 })
@@ -71,19 +70,82 @@ def update_address(request, pk: UUID4, address_in: AddressCreate):
     address_data = address_in.dict()
     city_pk = address_data.pop('city_id')
     city_instance = get_object_or_404(City, pk=city_pk)
-    user_pk = User.objects.get(id=request.auth['pk'])
-    Address.objects.filter(user=user_pk, pk=pk).update(**address_data, city=city_instance, user=user_pk)
+    Address.objects.filter(user=request.auth, pk=pk).update(**address_data, city=city_instance)
     address_qs = Address.objects.get(pk=pk)
     if address_qs:
         return 200, address_qs
     return 400, {'something went wrong'}
 
 
-@address_controller.delete('{pk}', auth=GlobalAuth(), response={
+@address_controller.delete('{pk}', auth=AuthBearer(), response={
     202: MessageOut
 })
 def delete_address(request, pk: UUID4):
-    address = get_object_or_404(Address, pk=pk, user=request.auth['pk'])
+    address = get_object_or_404(Address, pk=pk, user=request.auth)
     address.delete()
     return 202, {'message': 'address deleted'}
 
+
+@address_controller.get('city', response={
+    200: List[CityOut],
+    404: MessageOut
+})
+def get_all_cities(request):
+    cities_qs = City.objects.all()
+    if cities_qs:
+        return 200, cities_qs
+    return 404, {'detail': 'No cities found'}
+
+
+@address_controller.get('{pk}', response={
+    200: CityOut,
+    404: MessageOut
+})
+def retrieve_city(request, pk: UUID4):
+    cities_qs = City.objects.get(id=pk)
+    if cities_qs:
+        return 200, cities_qs
+    return 404, {'detail': 'No cities found'}
+
+
+@address_controller.delete('city/{pk}', auth=AuthBearer(), response={
+    202: MessageOut
+})
+def delete_city(request, pk: UUID4):
+    city = get_object_or_404(City, id=pk)
+    city.delete()
+    return 202, {'message': 'city deleted'}
+
+
+@address_controller.get('city', auth=AuthBearer(), response={
+    200: CityOut,
+    404: MessageOut
+})
+def get_user_city(request):
+    cities_qs = City.objects.get(addresses__user=request.auth)
+    if cities_qs:
+        return 200, cities_qs
+    return 404, {'detail': 'No cities found'}
+
+
+@address_controller.post('city', auth=AuthBearer(), response={
+    201: CityOut,
+    400: MessageOut
+})
+def create_city(request, city_in: CityCreate):
+    city_data = city_in.dict()
+    city = City.objects.create(**city_data)
+    return 201, city
+
+
+@address_controller.put('city/{pk}', auth=AuthBearer(), response={
+    200: CityOut,
+    400: MessageOut
+})
+def update_city(request, pk: UUID4, city_in: CityCreate):
+    city_data = city_in.dict()
+    City.objects.filter(id=pk).update(**city_data)
+    city_qs = City.objects.get(id=pk)
+    if city_qs:
+        return 200, city_qs
+    return 400, {'message': 'something went wrong'}

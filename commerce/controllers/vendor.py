@@ -6,10 +6,13 @@ from ninja import Router, File
 from ninja.files import UploadedFile
 from pydantic import UUID4
 
-from account.authorization import GlobalAuth
-from account.models import Vendor
 from account.schemas import VendorOut, VendorEdit
-from commerce.scehmas import MessageOut
+from commerce.models import Product, Vendor
+from commerce.schemas import PaginatedProductDataOut
+from config.utils import status
+from config.utils.permissions import AuthBearer
+from config.utils.schemas import MessageOut
+from config.utils.utils import response
 
 User = get_user_model()
 
@@ -23,52 +26,71 @@ vendor_controller = Router(tags=['Vendors'])
 def get_vendors(request, q: str = None):
     if not q:
         vendor_qs = Vendor.objects.all()
-    elif q:
+    if q:
         vendor_qs = Vendor.objects.filter(
-            Q(store_name__icontains=q) | Q(description__icontains=q) | Q(products__name__icontains=q)
+            Q(name__icontains=q) | Q(products__name__icontains=q)
         )
     if vendor_qs:
         return 200, vendor_qs
     return 404, {'message': 'no vendors found'}
 
 
-@vendor_controller.get('{pk}', auth=GlobalAuth(), response={
+@vendor_controller.get('{pk}', response={
     200: VendorOut,
     404: MessageOut
 })
-def get_vendor_by_id(request, pk: UUID4):
+def retrieve_vendor(request, pk: UUID4):
     vendor_qs = Vendor.objects.get(id=pk)
     if vendor_qs:
         return 200, vendor_qs
     return 404, {'message': 'vendor not found'}
 
 
-@vendor_controller.get('', auth=GlobalAuth(), response={
+@vendor_controller.get('', auth=AuthBearer(), response={
     200: VendorOut,
     404: MessageOut
 })
 def get_vendor(request):
-    user_pk = User.objects.get(id=request.auth['pk'])
-    vendor_qs = Vendor.objects.get(user=user_pk)
+    vendor_qs = Vendor.objects.get(user=request.auth)
     if vendor_qs:
         return 200, vendor_qs
     return 404, {'message': 'vendor not found'}
 
 
-@vendor_controller.put('', auth=GlobalAuth(), response={
-    200: MessageOut
-})
-def edit_vendor(request, vendor_in: VendorEdit):
-    user_pk = User.objects.get(id=request.auth['pk'])
-    vendor_data = vendor_in.dict()
-    Vendor.objects.filter(user=user_pk).update(**vendor_data, user=user_pk)
-    return 200, {'message': 'updated successfully'}
-
-
-@vendor_controller.put('edit', auth=GlobalAuth(), response={
-    201: MessageOut,
+@vendor_controller.post('', auth=AuthBearer(), response={
+    200: MessageOut,
     400: MessageOut
 })
 def edit_vendor_image(request, image_in: UploadedFile = File(...)):
-    Vendor.objects.filter(user_id=request.auth['pk']).update(image=image_in)
-    return 201, {'message': 'image edited successfully'}
+    Vendor.objects.filter(user=request.auth).update(image=image_in.name)
+    return 200, {'message': 'image edited successfully'}
+
+
+@vendor_controller.put('', auth=AuthBearer(), response={
+    200: MessageOut
+})
+def edit_vendor(request, vendor_in: VendorEdit):
+    vendor_data = vendor_in.dict()
+    Vendor.objects.filter(user=request.auth).update(**vendor_data, user=request.auth)
+    return 200, {'message': 'updated successfully'}
+
+
+@vendor_controller.get('vendor/products', auth=AuthBearer(), response={200: PaginatedProductDataOut})
+def get_vendor_products(request, per_page: int = 12, page: int = 1):
+    """
+    Get the products of the vendor that's currently logged in
+    """
+    product_qs = Product.objects.filter(vendor__user=request.auth)
+    if not product_qs:
+        return response(status.HTTP_404_NOT_FOUND, {"message": "No vendor products found"})
+
+    return response(status.HTTP_200_OK, product_qs, paginated=True, per_page=per_page, page=page)
+
+
+@vendor_controller.get('vendor/products/{pk}', response={200: PaginatedProductDataOut})
+def get_vendor_products_by_id(request, pk:UUID4, per_page: int = 12, page: int = 1):
+    product_qs = Product.objects.filter(vendor__id=pk)
+    if not product_qs:
+        return response(status.HTTP_404_NOT_FOUND, {"message": "No vendor products found"})
+
+    return response(status.HTTP_200_OK, product_qs, paginated=True, per_page=per_page, page=page)

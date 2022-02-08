@@ -3,9 +3,7 @@ from django.contrib.auth.forms import UserCreationForm, ReadOnlyPasswordHashFiel
 from django import forms
 from django.urls import reverse_lazy
 
-from account.models import User
-
-FORM_CONTROL = 'form-control '
+from account.models import EmailAccount
 
 
 class RegistrationForm(UserCreationForm):
@@ -15,7 +13,7 @@ class RegistrationForm(UserCreationForm):
     email = forms.EmailField(max_length=60, help_text='Required. Add a valid email address')
 
     class Meta:
-        model = User
+        model = EmailAccount
         fields = ('email', 'password1', 'password2')
 
     def __init__(self, *args, **kwargs):
@@ -25,7 +23,7 @@ class RegistrationForm(UserCreationForm):
         super(RegistrationForm, self).__init__(*args, **kwargs)
         for field in (
                 self.fields['email'], self.fields['password1'], self.fields['password2']):
-            field.widget.attrs.update({'class': FORM_CONTROL})
+            field.widget.attrs.update({'class': 'form-control '})
 
 
 class AccountAuthenticationForm(forms.ModelForm):
@@ -35,11 +33,11 @@ class AccountAuthenticationForm(forms.ModelForm):
     password = forms.CharField(label='Password', widget=forms.PasswordInput)
 
     class Meta:
-        model = User
+        model = EmailAccount
         fields = ('email', 'password')
         widgets = {
-            'email': forms.TextInput(attrs={'class': FORM_CONTROL}),
-            'password': forms.TextInput(attrs={'class': FORM_CONTROL}),
+            'email': forms.TextInput(attrs={'class': 'form-control'}),
+            'password': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -48,7 +46,7 @@ class AccountAuthenticationForm(forms.ModelForm):
         """
         super(AccountAuthenticationForm, self).__init__(*args, **kwargs)
         for field in (self.fields['email'], self.fields['password']):
-            field.widget.attrs.update({'class': FORM_CONTROL})
+            field.widget.attrs.update({'class': 'form-control '})
 
     def clean(self):
         if self.is_valid():
@@ -64,11 +62,11 @@ class AccountUpdateForm(forms.ModelForm):
     """
 
     class Meta:
-        model = User
+        model = EmailAccount
         fields = ('email',)
         widgets = {
-            'email': forms.TextInput(attrs={'class': FORM_CONTROL}),
-            'password': forms.TextInput(attrs={'class': FORM_CONTROL}),
+            'email': forms.TextInput(attrs={'class': 'form-control'}),
+            'password': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -77,14 +75,14 @@ class AccountUpdateForm(forms.ModelForm):
         """
         super(AccountUpdateForm, self).__init__(*args, **kwargs)
         for field in (self.fields['email'],):
-            field.widget.attrs.update({'class': FORM_CONTROL})
+            field.widget.attrs.update({'class': 'form-control '})
 
     def clean_email(self):
         if self.is_valid():
             email = self.cleaned_data['email']
             try:
-                User.objects.exclude(pk=self.instance.pk).get(email=email)
-            except User.DoesNotExist:
+                account = EmailAccount.objects.exclude(pk=self.instance.pk).get(email=email)
+            except EmailAccount.DoesNotExist:
                 return email
             raise forms.ValidationError("Email '%s' already in use." % email)
 
@@ -96,7 +94,7 @@ class UserAdminCreationForm(forms.ModelForm):
     password2 = forms.CharField(label='Password confirmation', widget=forms.PasswordInput)
 
     class Meta:
-        model = User
+        model = EmailAccount
         fields = ('email',)
 
     def clean_password2(self):
@@ -132,7 +130,7 @@ class UserAdminChangeForm(forms.ModelForm):
                                             ) % reverse_lazy('admin:auth_user_password_change', args=[self.instance.id])
 
     class Meta:
-        model = User
+        model = EmailAccount
         fields = ('email', 'password')
 
     def clean_password(self):

@@ -1,52 +1,63 @@
-from typing import Optional
+import datetime
+
 from ninja import Schema
-from pydantic import EmailStr, Field, UUID4
+from pydantic import EmailStr, UUID4
 
-
-class AccountCreate(Schema):
-    first_name: str
-    last_name: str
-    email: EmailStr
-    password1: str = Field(min_length=8)
-    password2: str
+from config.utils.schemas import Token
 
 
 class AccountOut(Schema):
+    email: EmailStr
+    first_name: str = None
+    last_name: str = None
+    phone_number: str = None
+    address1: str = None
+    address2: str = None
+    company_name: str = None
+    company_website: str = None
+    date_joined: datetime.datetime
+    is_verified: bool = None
+
+
+class AccountSignupIn(Schema):
     first_name: str
     last_name: str
     email: EmailStr
-    phone_number: Optional[str]
+    password1: str
+    password2: str
+
+
+class AccountSignupOut(Schema):
+    profile: AccountOut
+    token: Token
+
+
+class AccountConfirmationIn(Schema):
+    email: EmailStr
+    verification_code: str
+
+
+class AccountUpdateIn(Schema):
+    first_name: str = None
+    last_name: str = None
+    phone_number: str = None
     address1: str = None
     address2: str = None
     company_name: str = None
     company_website: str = None
 
 
-class TokenOut(Schema):
-    access: str
+class AccountSigninOut(Schema):
+    profile: AccountOut
+    token: Token
 
 
-class AuthOut(Schema):
-    token: TokenOut
-    account: AccountOut
-
-
-class SigninSchema(Schema):
+class AccountSigninIn(Schema):
     email: EmailStr
     password: str
 
 
-class AccountUpdate(Schema):
-    first_name: str
-    last_name: str
-    phone_number: Optional[str]
-    address1: str
-    address2: str
-    company_name: str
-    company_website: str
-
-
-class ChangePasswordSchema(Schema):
+class PasswordChangeIn(Schema):
     old_password: str
     new_password1: str
     new_password2: str
@@ -54,11 +65,10 @@ class ChangePasswordSchema(Schema):
 
 class VendorOut(Schema):
     id: UUID4
-    store_name: str
-    description: str
+    name: str
     image: str
 
 
 class VendorEdit(Schema):
-    store_name: str
+    name: str
     description: str

@@ -1,91 +1,89 @@
-from django.contrib.auth import get_user_model, authenticate
-from django.shortcuts import get_object_or_404
 from ninja import Router
+from http import HTTPStatus
+from django.contrib.auth import authenticate
+from config.utils.permissions import create_token, AuthBearer
+from config.utils.schemas import MessageOut
+from config.utils.utils import response
+from .models import EmailAccount
+from .schemas import AccountSignupOut, AccountSignupIn, AccountSigninOut, \
+    AccountSigninIn, AccountOut, AccountUpdateIn, PasswordChangeIn
+from django.shortcuts import get_object_or_404
 
-from account.authorization import GlobalAuth, get_tokens_for_user
-from account.schemas import AccountCreate, AuthOut, SigninSchema, AccountOut, AccountUpdate, ChangePasswordSchema
-from commerce.scehmas import MessageOut
-
-User = get_user_model()
-
-account_controller = Router(tags=['Auth'])
+auth_controller = Router(tags=['auth'])
 
 
-@account_controller.post('signup', response={
-    400: MessageOut,
-    201: AuthOut,
-})
-def signup(request, account_in: AccountCreate):
-    if account_in.password1 != account_in.password2:
-        return 400, {'detail': 'Passwords do not match!'}
+@auth_controller.post('/signup', response={200: AccountSignupOut, 403: MessageOut, 500: MessageOut})
+def register(request, payload: AccountSignupIn):
+    if payload.password1 != payload.password2:
+        return response(HTTPStatus.BAD_REQUEST, {'message': 'Passwords does not match!'})
 
     try:
-        User.objects.get(email=account_in.email)
-    except User.DoesNotExist:
-        new_user = User.objects.create_user(
-            first_name=account_in.first_name,
-            last_name=account_in.last_name,
-            email=account_in.email,
-            password=account_in.password1,
-        )
-
-        token = get_tokens_for_user(new_user)
-
-        return 201, {
-            'token': token,
-            'account': new_user,
-        }
-
-    return 400, {'detail': 'User already registered!'}
+        EmailAccount.objects.get(email=payload.email)
+        return response(403,
+                        {'message': 'Forbidden, email is already registered'})
+    except EmailAccount.DoesNotExist:
+        user = EmailAccount.objects.create_user(first_name=payload.first_name, last_name=payload.last_name,
+                                                email=payload.email, password=payload.password1)
+        if user:
+            token = create_token(user.id)
+            return response(HTTPStatus.OK, {
+                'profile': user,
+                'token': token
+            })
+        else:
+            return response(HTTPStatus.INTERNAL_SERVER_ERROR, {'message': 'An error occurred, please try again.'})
 
 
-@account_controller.post('signin', response={
-    200: AuthOut,
-    404: MessageOut,
-})
-def signin(request, signin_in: SigninSchema):
-    user = authenticate(email=signin_in.email, password=signin_in.password)
-
-    if not user:
-        return 404, {'detail': 'User does not exist'}
-
-    token = get_tokens_for_user(user)
-
-    return {
-        'token': token,
-        'account': user
-    }
+@auth_controller.post('/signin', response={200: AccountSigninOut, 404: MessageOut})
+def login(request, payload: AccountSigninIn):
+    user = authenticate(email=payload.email, password=payload.password)
+    if user is not None:
+        return response(HTTPStatus.OK, {
+            'profile': user,
+            'token': create_token(user.id)
+        })
+    return response(HTTPStatus.NOT_FOUND, {'message': 'User not found'})
 
 
-@account_controller.get('', auth=GlobalAuth(), response=AccountOut)
+@auth_controller.get('/me',
+                     auth=AuthBearer(),
+                     response={200: AccountOut, 400: MessageOut})
 def me(request):
-    return get_object_or_404(User, id=request.auth['pk'])
+    try:
+        user = get_object_or_404(EmailAccount, id=request.auth.id)
+    except:
+        return response(HTTPStatus.BAD_REQUEST, {'message': 'token missing'})
+    return response(HTTPStatus.OK, user)
 
 
-@account_controller.put('', auth=GlobalAuth(), response={
-    200: AccountOut,
-})
-def update_account(request, update_in: AccountUpdate):
-    User.objects.filter(id=request.auth['pk']).update(**update_in.dict())
-    return get_object_or_404(User, id=request.auth['pk'])
+@auth_controller.put('/me',
+                     auth=AuthBearer(),
+                     response={200: AccountOut, 400: MessageOut})
+def update_me(request, user_in: AccountUpdateIn):
+    EmailAccount.objects.filter(id=request.auth.id).update(**user_in.dict())
+    user = get_object_or_404(EmailAccount, id=request.auth.id)
+    if not user:
+        return response(HTTPStatus.BAD_REQUEST, data={'message': 'something went wrong'})
+    return response(HTTPStatus.OK, user)
 
 
-@account_controller.post('change-password', auth=GlobalAuth(), response={
-    200: MessageOut,
-    400: MessageOut
-})
-def change_password(request, password_update_in: ChangePasswordSchema):
-    # user = authenticate(get_object_or_404(User, id=request.auth['pk']).email, password_update_in.old_password)
-    if password_update_in.new_password1 != password_update_in.new_password2:
-        return 400, {'detail': 'passwords do not match'}
-    user = get_object_or_404(User, id=request.auth['pk'])
-    is_it_him = user.check_password(password_update_in.old_password)
+@auth_controller.post('/change-password',
+                      auth=AuthBearer(),
+                      response={200: MessageOut, 400: MessageOut})
+def change_password(request, payload: PasswordChangeIn):
+    if payload.new_password1 != payload.new_password2:
+        return response(HTTPStatus.BAD_REQUEST, {'message': 'Passwords do not match!'})
 
-    if not is_it_him:
-        return 400, {'detail': 'Dude, make sure you are him!'}
+    try:
+        user = get_object_or_404(EmailAccount, id=request.auth.id)
+    except:
+        return response(HTTPStatus.BAD_REQUEST, {'message': 'token missing'})
 
-    user.set_password(password_update_in.new_password1)
-    user.save()
-    return {'detail': 'password updated successfully'}
+    user_update = authenticate(email=user.email, password=payload.old_password)
 
+    if user_update is not None:
+        user_update.set_password(payload.new_password1)
+        user_update.save()
+        return response(HTTPStatus.OK, {'message': 'password updated'})
 
+    return response(HTTPStatus.BAD_REQUEST, {'message': 'something went wrong, please try again later'})

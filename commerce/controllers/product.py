@@ -3,107 +3,106 @@ from typing import List
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from ninja import Router
+from ninja import Router, File
+from ninja.files import UploadedFile
 from pydantic import UUID4
 
-from account.authorization import GlobalAuth
-from account.models import Vendor
-from commerce.models import Product
-from commerce.scehmas import ProductOut, MessageOut, ProductCreate
+from commerce.models import Product, Vendor, ProductImage
+from commerce.schemas import ProductCreate, PaginatedProductDataOut, ProductDataOut
+from config.utils import status
+from config.utils.permissions import AuthBearer
+from config.utils.schemas import MessageOut
+from config.utils.utils import response
 
 User = get_user_model()
 
 product_controller = Router(tags=['Products'])
 
 
-@product_controller.get('all', response={
-    200: List[ProductOut],
+@product_controller.get('/all', auth=None, response={
+    200: PaginatedProductDataOut,
     404: MessageOut
 })
-def list_products(request, *, price_from: int = None, price_to: int = None, vendor: UUID4 = None,
-                  category: UUID4 = None, merchant: UUID4 = None, label: UUID4 = None, search: str = None
-                  ):
-    products_qs = Product.objects.filter(is_active=True).select_related('merchant', 'vendor', 'category', 'label')
-
-    if not products_qs:
-        return 404, {'detail': 'No products found'}
-
-    if price_from:
-        products_qs = products_qs.filter(discounted_price__gte=price_from)
-
-    if price_to:
-        products_qs = products_qs.filter(discounted_price__lte=price_to)
-
-    if vendor:
-        products_qs = products_qs.filter(vendor__id=vendor)
-
-    if merchant:
-        products_qs = products_qs.filter(merchant__id=merchant)
-
-    if label:
-        products_qs = products_qs.filter(label__id=label)
-
-    if category:
-        products_qs = products_qs.filter(category__id=category)
+def all_products(request, lowest_gte=None, lowest_lte=None, category_name=None,
+                 merchant_name=None, vendor_name=None, is_featured=None, label_name=None,
+                 search=None, per_page: int = 12, page: int = 1,
+                 ):
+    products_qs = Product.objects.filter(is_active=True).select_related('category', 'vendor', 'merchant')
+    if lowest_gte:
+        products_qs = products_qs.filter(lowest__gte=lowest_gte)
+    if lowest_lte:
+        products_qs = products_qs.filter(lowest__lte=lowest_lte)
+    if category_name:
+        products_qs = products_qs.filter(category__name=category_name)
+    if merchant_name:
+        products_qs = products_qs.filter(merchant__name=merchant_name)
+    if vendor_name:
+        products_qs = products_qs.filter(vendor__name=vendor_name)
+    if is_featured:
+        products_qs = products_qs.filter(is_featured=is_featured)
+    if label_name:
+        products_qs = products_qs.filter(label__name=label_name)
 
     if search:
         products_qs = products_qs.filter(
-            Q(name__icontains=search) | Q(description__icontains=search) | Q(category__name__icontains=search)
-            | Q(merchant__name__icontains=search) | Q(vendor__store_name__icontains=search)
-            | Q(category__description__icontains=search) | Q(vendor__description__icontains=search)
+            Q(name__icontains=search) | Q(description__icontains=search)
         )
+    if products_qs:
+        return response(status.HTTP_200_OK, products_qs, paginated=True, per_page=per_page, page=page)
+    return 404, {'message': 'product not found'}
 
-    return 200, products_qs
+
+# @product_controller.get('/{pk}/related', auth=None, response={200: PaginatedProductDataOut, 404: MessageOut})
+# def related_products(request, pk: UUID4, per_page: int = 12, page: int = 1):
+#     try:
+#         product_qs = Product.objects.get(pk=pk)
+#     except Product.DoesNotExist:
+#         return response(status.HTTP_404_NOT_FOUND, {'message': 'Product not found'})
+#
+#     related = product_qs.tags.similar_objects()
+#
+#     if not related:
+#         return response(status.HTTP_404_NOT_FOUND, {"message": "No related products found"})
+#
+#     return response(status.HTTP_200_OK, related, paginated=True, per_page=per_page, page=page)
 
 
 @product_controller.get('/{pk}', response={
-    200: List[ProductOut],
+    200: ProductDataOut,
     404: MessageOut
 
 })
-def get_product_by_id(request, pk: UUID4):
+def retrieve_product(request, pk: UUID4):
     product_qs = get_object_or_404(Product, id=pk)
     if product_qs:
         return 200, product_qs
     return 404, {'message': 'product not found'}
 
 
-@product_controller.get('', auth=GlobalAuth(), response=List[ProductOut])
-def get_vendor_products(request):
-    """
-    Get the products of the vendor that's currently logged in
-    """
-    product_qs = Product.objects.filter(vendor__user__id=request.auth['pk'])
-    if product_qs:
-        return 200, product_qs
-    return 404, {'message': 'product not found'}
-
-
-@product_controller.post('', auth=GlobalAuth(), response={
+@product_controller.post('', auth=AuthBearer(), response={
     201: MessageOut,
     400: MessageOut,
 })
-def create_vendor_products(request, product_in: ProductCreate):
+def create_vendor_products(request, product_in: ProductCreate, is_default: bool, image_in: UploadedFile = File(...)):
     product_data = product_in.dict()
-    user_pk = User.objects.get(id=request.auth['pk'])
-    vendor_instance = get_object_or_404(Vendor, user=user_pk)
+    vendor_instance = get_object_or_404(Vendor, user=request.auth)
     product_data.pop('merchant_id')
     product_data.pop('label_id')
     product_data.pop('category_id')
-    Product.objects.create(**product_data, vendor=vendor_instance,
-                           category_id=product_in.category_id, label_id=product_in.label_id,
-                           merchant_id=product_in.merchant_id
-                           )
-
+    product = Product.objects.create(**product_data, vendor=vendor_instance,
+                                     category_id=product_in.category_id, label_id=product_in.label_id,
+                                     merchant_id=product_in.merchant_id
+                                     )
+    ProductImage.objects.create(image=image_in, product=product, is_default_image=is_default, alt_text=product.name)
     return 201, {'message': 'product created successfully'}
 
 
-@product_controller.put('update/{pk}', auth=GlobalAuth(), response={
-    200: ProductOut,
+@product_controller.put('update/{pk}', auth=AuthBearer(), response={
+    200: ProductDataOut,
     400: MessageOut,
 })
 def update_vendor_products(request, pk: UUID4, product_in: ProductCreate):
-    vendor_instance = get_object_or_404(Vendor, user__id=request.auth['pk'])
+    vendor_instance = get_object_or_404(Vendor, user=request.auth)
     product_data = product_in.dict()
     product_data.pop('merchant_id')
     product_data.pop('label_id')
@@ -115,11 +114,11 @@ def update_vendor_products(request, pk: UUID4, product_in: ProductCreate):
     return 200, product_qs
 
 
-@product_controller.delete('delete/{pk}', auth=GlobalAuth(), response={
+@product_controller.delete('delete/{pk}', auth=AuthBearer(), response={
     202: MessageOut
 })
 def delete_vendor_products(request, pk: UUID4):
-    product = get_object_or_404(Product, id=pk, vendor__user__id=request.auth['pk'])
+    product = get_object_or_404(Product, id=pk, vendor__user=request.auth)
     product.delete()
 
     return 202, {'message': 'product deleted successfully'}
