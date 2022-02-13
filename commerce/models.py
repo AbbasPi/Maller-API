@@ -25,7 +25,7 @@ class Product(Entity):
     length = models.FloatField('length', null=True, blank=True)
     lowest = models.DecimalField('lowest', max_digits=10, decimal_places=2)
     lowest_discounted = models.DecimalField('lowest_discounted', max_digits=10, decimal_places=2)
-    vendor = models.ForeignKey('commerce.Vendor', verbose_name='vendor', related_name='products',
+    vendor = models.ForeignKey('account.Vendor', verbose_name='vendor', related_name='products',
                                on_delete=models.CASCADE)
     category = models.ForeignKey('commerce.Category', verbose_name='category', related_name='products',
                                  null=True,
@@ -208,7 +208,7 @@ class Merchant(Entity):
 class VendorRating(Entity):
     rate = models.FloatField(validators=[MinValueValidator(0.0), MaxValueValidator(5.0)], null=True,
                              blank=True)
-    vendor = models.ForeignKey('commerce.Vendor', on_delete=models.CASCADE, related_name='vendor_rating')
+    vendor = models.ForeignKey('account.Vendor', on_delete=models.CASCADE, related_name='vendor_rating')
     user = models.ForeignKey(User, related_name='vendor_rating', on_delete=models.CASCADE)
 
     def __int__(self):
@@ -382,29 +382,6 @@ class Label(Entity):
         return self.name
 
 
-class Vendor(Entity):
-    user = models.OneToOneField('account.EmailAccount', related_name='vendor', on_delete=models.CASCADE)
-    name = models.CharField('name', max_length=255)
-    description = RichTextField('description', null=True, blank=True)
-    image = models.ImageField('image', upload_to='vendor/')
-    slug = models.SlugField('slug')
-
-    class Meta:
-        verbose_name = 'vendor'
-        verbose_name_plural = 'vendors'
-
-    def __str__(self):
-        return self.name
-
-    def save(self, force_insert=False, force_update=False, using=None,
-             update_fields=None, *args, **kwargs):
-        super().save(*args, **kwargs)
-
-        img = Image.open(self.image.path)
-        if img.height > 500 or img.width > 500:
-            output_size = (500, 500)
-            img.thumbnail(output_size)
-            img.save(self.image.path)
 
 
 class City(Entity):

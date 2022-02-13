@@ -6,7 +6,7 @@ from mptt.admin import DraggableMPTTAdmin
 from nested_inline.admin import NestedModelAdmin, NestedStackedInline
 
 from commerce.models import Product, Order, Item, Address, OrderStatus, ProductImage, City, Category, Merchant, \
-    Label, ProductRating, VendorRating, Vendor, Promo, DeliveryMap
+    Label, ProductRating, VendorRating, Promo, DeliveryMap
 
 User = get_user_model()
 
@@ -237,11 +237,7 @@ class PromoAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
 
-@admin.register(Vendor)
-class VendorAdmin(admin.ModelAdmin):
-    list_display = ('name', 'image', 'slug')
-    search_fields = ('name', 'slug')
-    prepopulated_fields = {'slug': ['name']}
+
 
 
 @admin.register(ProductRating)

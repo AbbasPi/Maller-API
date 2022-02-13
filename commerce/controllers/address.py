@@ -1,16 +1,13 @@
 from typing import List
 
-from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from ninja import Router
 from pydantic import UUID4
 
 from config.utils.permissions import AuthBearer
-from commerce.models import Address, User, City
-from commerce.schemas import AddressOut, AddressCreate, CityOut, CityCreate
+from commerce.models import Address, City
+from commerce.schemas import AddressOut, AddressCreate, CityOut
 from config.utils.schemas import MessageOut
-
-User = get_user_model()
 
 address_controller = Router(tags=['Addresses'])
 
@@ -27,18 +24,18 @@ def get_addresses(request):
 
 
 @address_controller.get('address', auth=AuthBearer(), response={
-    200: AddressOut,
+    200: List[AddressOut],
     404: MessageOut
 })
 def get_user_address(request):
-    address_qs = Address.objects.filter(user=request.auth).select_related('city')
+    address_qs = Address.objects.filter(user=request.auth)
     if address_qs:
         return 200, address_qs
     return 404, {'message': 'address not found'}
 
 
 @address_controller.get('{pk}', auth=AuthBearer(), response={
-    200: AddressOut,
+    200: List[AddressOut],
     404: MessageOut
 })
 def retrieve_address(request, pk: UUID4):
@@ -63,7 +60,7 @@ def create_address(request, address_in: AddressCreate):
 
 
 @address_controller.put('{pk}', auth=AuthBearer(), response={
-    200: AddressOut,
+    200: MessageOut,
     400: MessageOut
 })
 def update_address(request, pk: UUID4, address_in: AddressCreate):
@@ -73,8 +70,8 @@ def update_address(request, pk: UUID4, address_in: AddressCreate):
     Address.objects.filter(user=request.auth, pk=pk).update(**address_data, city=city_instance)
     address_qs = Address.objects.get(pk=pk)
     if address_qs:
-        return 200, address_qs
-    return 400, {'something went wrong'}
+        return 200, {'message': 'address created successfully' }
+    return 400, {'message': 'something went wrong'}
 
 
 @address_controller.delete('{pk}', auth=AuthBearer(), response={
@@ -86,7 +83,7 @@ def delete_address(request, pk: UUID4):
     return 202, {'message': 'address deleted'}
 
 
-@address_controller.get('city', response={
+@address_controller.get('city/all', response={
     200: List[CityOut],
     404: MessageOut
 })
@@ -97,7 +94,7 @@ def get_all_cities(request):
     return 404, {'detail': 'No cities found'}
 
 
-@address_controller.get('{pk}', response={
+@address_controller.get('city/{pk}', response={
     200: CityOut,
     404: MessageOut
 })
@@ -106,46 +103,3 @@ def retrieve_city(request, pk: UUID4):
     if cities_qs:
         return 200, cities_qs
     return 404, {'detail': 'No cities found'}
-
-
-@address_controller.delete('city/{pk}', auth=AuthBearer(), response={
-    202: MessageOut
-})
-def delete_city(request, pk: UUID4):
-    city = get_object_or_404(City, id=pk)
-    city.delete()
-    return 202, {'message': 'city deleted'}
-
-
-@address_controller.get('city', auth=AuthBearer(), response={
-    200: CityOut,
-    404: MessageOut
-})
-def get_user_city(request):
-    cities_qs = City.objects.get(addresses__user=request.auth)
-    if cities_qs:
-        return 200, cities_qs
-    return 404, {'detail': 'No cities found'}
-
-
-@address_controller.post('city', auth=AuthBearer(), response={
-    201: CityOut,
-    400: MessageOut
-})
-def create_city(request, city_in: CityCreate):
-    city_data = city_in.dict()
-    city = City.objects.create(**city_data)
-    return 201, city
-
-
-@address_controller.put('city/{pk}', auth=AuthBearer(), response={
-    200: CityOut,
-    400: MessageOut
-})
-def update_city(request, pk: UUID4, city_in: CityCreate):
-    city_data = city_in.dict()
-    City.objects.filter(id=pk).update(**city_data)
-    city_qs = City.objects.get(id=pk)
-    if city_qs:
-        return 200, city_qs
-    return 400, {'message': 'something went wrong'}

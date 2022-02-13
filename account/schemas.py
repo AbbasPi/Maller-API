@@ -72,3 +72,8 @@ class VendorOut(Schema):
 class VendorEdit(Schema):
     name: str
     description: str
+
+
+class ImageEdit(Schema):
+    is_default_image: bool
+    alt_text: str

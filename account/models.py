@@ -1,3 +1,5 @@
+from PIL import Image
+from ckeditor.fields import RichTextField
 from django.contrib.auth.models import UserManager, AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -52,3 +54,26 @@ class EmailAccount(AbstractUser, Entity):
     def __str__(self):
         return self.email
 
+class Vendor(Entity):
+    user = models.OneToOneField('account.EmailAccount', related_name='vendor', on_delete=models.CASCADE)
+    name = models.CharField('name', max_length=255)
+    description = RichTextField('description', null=True, blank=True)
+    image = models.ImageField('image', upload_to='vendor/')
+    slug = models.SlugField('slug')
+
+    class Meta:
+        verbose_name = 'vendor'
+        verbose_name_plural = 'vendors'
+
+    def __str__(self):
+        return self.name
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        img = Image.open(self.image.path)
+        if img.height > 500 or img.width > 500:
+            output_size = (500, 500)
+            img.thumbnail(output_size)
+            img.save(self.image.path)

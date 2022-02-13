@@ -9,7 +9,7 @@ from .schemas import AccountSignupOut, AccountSignupIn, AccountSigninOut, \
     AccountSigninIn, AccountOut, AccountUpdateIn, PasswordChangeIn
 from django.shortcuts import get_object_or_404
 
-auth_controller = Router(tags=['auth'])
+auth_controller = Router(tags=['Auth'])
 
 
 @auth_controller.post('/signup', response={200: AccountSignupOut, 403: MessageOut, 500: MessageOut})

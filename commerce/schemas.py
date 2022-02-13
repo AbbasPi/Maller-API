@@ -3,9 +3,10 @@ from ninja import ModelSchema, Schema
 from pydantic import UUID4
 from ninja.orm import create_schema
 
+from account.models import Vendor
 from config.utils.schemas import Paginated, UUIDSchema
 from account.schemas import AccountOut
-from commerce.models import Address, OrderStatus, Promo, Vendor
+from commerce.models import Address, OrderStatus, Promo
 
 
 class CategoryDataOut(Schema):
@@ -105,13 +106,14 @@ class ProductCreate(Schema):
     description: str = None
     lowest: int
     lowest_discounted: int = None
+    qty: int
     height: int = None
     width: int = None
     weight: int = None
     length: int = None
     is_active: bool
     is_featured: bool
-    category_id: int
+    category_id: UUID4
     label_id: UUID4
     merchant_id: UUID4
 

@@ -7,9 +7,10 @@ from ninja import Router, File
 from ninja.files import UploadedFile
 from pydantic import UUID4
 
-from commerce.models import Merchant, Category, Label, ProductImage, Product, ProductRating, VendorRating, Vendor
+from account.schemas import ImageEdit
+from commerce.models import Merchant, Category, Label, ProductImage, Product, ProductRating, VendorRating
 from commerce.schemas import MerchantOut, LabelOut, ProductRatingOut, ProductRatingCreate, VendorRatingOut, \
-    VendorRatingCreate, ProductImageDataOut, CategoryDataOut, PaginatedProductDataOut
+    VendorRatingCreate, CategoryDataOut, PaginatedProductDataOut
 from config.utils import status
 from config.utils.permissions import AuthBearer
 from config.utils.schemas import MessageOut
@@ -25,6 +26,17 @@ product_rating_controller = Router(tags=['Product rating'])
 vendor_rating_controller = Router(tags=['Vendor rating'])
 
 
+@product_image_controller.post('edit/{pk}', auth=AuthBearer(), response={
+    201: MessageOut,
+    400: MessageOut
+})
+def update_image(request, pk: UUID4, image: ImageEdit, image_in: UploadedFile = File(...)):
+    get_object_or_404(Product, images__id=pk, vendor__user_id=request.auth)
+    image_data = image.dict()
+    ProductImage.objects.filter(id=pk).update(image=image_in, **image_data)
+    return 201, {'message': 'image updated successfully'}
+
+
 @product_image_controller.post('', auth=AuthBearer(), response={
     201: MessageOut,
     400: MessageOut
@@ -33,17 +45,6 @@ def add_image(request, product_id: UUID4, is_default: bool, alt_text: str = None
     product = get_object_or_404(Product, id=product_id, vendor__user_id=request.auth)
     ProductImage.objects.create(image=image_in, product_id=product.pk, alt_text=alt_text, is_default_image=is_default)
     return 201, {'message': 'image added successfully'}
-
-
-@product_image_controller.put('', auth=AuthBearer(), response={
-    201: MessageOut,
-    400: MessageOut
-})
-def update_image(request, product_id: UUID4, is_default: bool, alt_text: str = None,
-                 image_in: UploadedFile = File(...)):
-    product = get_object_or_404(Product, id=product_id, vendor__user_id=request.auth['pk'])
-    ProductImage.objects.update(image=image_in, product_id=product.pk, alt_text=alt_text, is_default_image=is_default)
-    return 201, {'message': 'image updated successfully'}
 
 
 @product_image_controller.delete('{pk}', auth=AuthBearer(), response={
@@ -78,11 +79,8 @@ def get_label_product(request, pk: UUID4, per_page: int = 12, page: int = 1):
     except Label.DoesNotExist:
         return response(status.HTTP_404_NOT_FOUND, {'message': 'label does not exist'})
     products = (
-        Product.objects.filter(label__id=pk)
-            .select_related('label', 'category', 'vendor', 'merchant')
+        Product.objects.filter(label__id=pk).select_related('label', 'category', 'vendor', 'merchant')
     )
-
-    shuffle(products)
 
     return response(status.HTTP_200_OK, products, paginated=True, per_page=per_page, page=page)
 
@@ -114,8 +112,6 @@ def category_products(request, pk: UUID4, per_page: int = 12, page: int = 1):
             .select_related('category', 'vendor', 'merchant')
     )
 
-    shuffle(products)
-
     return response(status.HTTP_200_OK, products, paginated=True, per_page=per_page, page=page)
 
 
@@ -130,13 +126,23 @@ def get_all_merchants(request):
     return 404, {'message': 'no merchants found'}
 
 
-@vendor_rating_controller.get('/products', response=PaginatedProductDataOut)
-def get_merchant_products(request, merchant_pk: UUID4, per_page: int = 12, page: int = 1):
-    product_qs = Product.objects.filter(merchant__id=merchant_pk)
-    if not product_qs:
-        return response(status.HTTP_404_NOT_FOUND, {"message": "No merchant products found"})
+@merchant_controller.get('{pk}/products', response={
+    200: PaginatedProductDataOut,
+    404: MessageOut
+})
+def merchant_products(request, pk: UUID4, per_page: int = 12, page: int = 1):
+    if pk is None:
+        return response(status.HTTP_404_NOT_FOUND, {'message': 'no merchant specified'})
+    try:
+        merchant = Merchant.objects.get(pk=pk)
+    except Merchant.DoesNotExist:
+        return response(status.HTTP_404_NOT_FOUND, {'message': 'merchant does not exist'})
+    products = (
+        Product.objects.filter(merchant__id=pk)
+            .select_related('category', 'vendor', 'merchant')
+    )
 
-    return response(status.HTTP_200_OK, product_qs, paginated=True, per_page=per_page, page=page)
+    return response(status.HTTP_200_OK, products, paginated=True, per_page=per_page, page=page)
 
 
 @product_rating_controller.get('{pk}', response={
@@ -158,15 +164,15 @@ def add_product_rating(request, rating_in: ProductRatingCreate):
     rating_data = rating_in.dict()
     if rating_data['rate'] > 5 or rating_data['rate'] < 1:
         return 400, {'message': 'rate must be between 1-5'}
-    user = User.objects.get(id=request.auth['pk'])
+    user = request.auth
     try:
         if ProductRating.objects.get(product__id=rating_data['product_id'],
                                      user=user):
-            ProductRating.objects.filter(product__id=['[product_id]'],
-                                         user=request.auth).update(**rating_data)
+            ProductRating.objects.filter(product__id=rating_data['product_id'],
+                                         user=user).update(**rating_data)
+            return 201, {'message': f'product rating updated'}
     except ProductRating.DoesNotExist:
-        instance = ProductRating.objects.create(**rating_data)
-        instance.user.add(user)
+        instance = ProductRating.objects.create(**rating_data, user=user)
         return 201, {'message': 'product rating added successfully'}
 
 
@@ -203,7 +209,7 @@ def add_vendor_rating(request, rating_in: VendorRatingCreate):
                                     user=request.auth):
             VendorRating.objects.filter(vendor_id=vendor_data['vendor_id'],
                                         user=request.auth).update(**vendor_data)
-            return 201, {'message': 'rateing updated'}
+            return 201, {'message': 'rating updated'}
     except VendorRating.DoesNotExist:
         VendorRating.objects.create(**vendor_data, user=request.auth)
         return 201, {'message': 'vendor rating added successfully'}

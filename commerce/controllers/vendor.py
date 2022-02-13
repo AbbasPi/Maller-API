@@ -6,8 +6,9 @@ from ninja import Router, File
 from ninja.files import UploadedFile
 from pydantic import UUID4
 
+from account.models import Vendor
 from account.schemas import VendorOut, VendorEdit
-from commerce.models import Product, Vendor
+from commerce.models import Product
 from commerce.schemas import PaginatedProductDataOut
 from config.utils import status
 from config.utils.permissions import AuthBearer
