@@ -1,4 +1,3 @@
-from random import shuffle
 from typing import List
 
 from django.contrib.auth import get_user_model
@@ -7,7 +6,7 @@ from ninja import Router, File
 from ninja.files import UploadedFile
 from pydantic import UUID4
 
-from account.schemas import ImageEdit
+from commerce.schemas import ImageEdit, ImageCreate
 from commerce.models import Merchant, Category, Label, ProductImage, Product, ProductRating, VendorRating
 from commerce.schemas import MerchantOut, LabelOut, ProductRatingOut, ProductRatingCreate, VendorRatingOut, \
     VendorRatingCreate, CategoryDataOut, PaginatedProductDataOut
@@ -33,7 +32,7 @@ vendor_rating_controller = Router(tags=['Vendor rating'])
 def update_image(request, pk: UUID4, image: ImageEdit, image_in: UploadedFile = File(...)):
     get_object_or_404(Product, images__id=pk, vendor__user_id=request.auth)
     image_data = image.dict()
-    ProductImage.objects.filter(id=pk).update(image=image_in, **image_data)
+    ProductImage.objects.filter(id=pk).update(image=f'product/{image_in}', **image_data)
     return 201, {'message': 'image updated successfully'}
 
 
@@ -41,9 +40,11 @@ def update_image(request, pk: UUID4, image: ImageEdit, image_in: UploadedFile = 
     201: MessageOut,
     400: MessageOut
 })
-def add_image(request, product_id: UUID4, is_default: bool, alt_text: str = None, image_in: UploadedFile = File(...)):
-    product = get_object_or_404(Product, id=product_id, vendor__user_id=request.auth)
-    ProductImage.objects.create(image=image_in, product_id=product.pk, alt_text=alt_text, is_default_image=is_default)
+def add_image(request, image: ImageCreate, image_in: UploadedFile = File(...)):
+    image_data = image.dict()
+    product_instance = image_data.pop('product_id')
+    product = get_object_or_404(Product, id=product_instance, vendor__user_id=request.auth)
+    ProductImage.objects.create(image=f'product/{image_in}', **image_data, product_id=product_instance)
     return 201, {'message': 'image added successfully'}
 
 

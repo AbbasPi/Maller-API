@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.utils.safestring import mark_safe
 from easy_select2 import select2_modelform
 from mptt.admin import DraggableMPTTAdmin
-from nested_inline.admin import NestedModelAdmin, NestedStackedInline
+from nested_inline.admin import NestedModelAdmin
 
 from commerce.models import Product, Order, Item, Address, OrderStatus, ProductImage, City, Category, Merchant, \
     Label, ProductRating, VendorRating, Promo, DeliveryMap
@@ -235,9 +235,6 @@ class PromoAdmin(admin.ModelAdmin):
     )
     list_filter = ('is_active', 'active_from', 'active_till')
     search_fields = ('name',)
-
-
-
 
 
 @admin.register(ProductRating)

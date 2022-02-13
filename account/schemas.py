@@ -67,13 +67,14 @@ class VendorOut(Schema):
     id: UUID4
     name: str
     image: str
+    facebook: str = None
+    instagram: str = None
+    twitter: str = None
 
 
 class VendorEdit(Schema):
     name: str
     description: str
-
-
-class ImageEdit(Schema):
-    is_default_image: bool
-    alt_text: str
+    facebook: str = None
+    instagram: str = None
+    twitter: str = None

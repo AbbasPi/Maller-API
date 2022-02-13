@@ -1,5 +1,3 @@
-from typing import List
-
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
@@ -53,21 +51,6 @@ def all_products(request, lowest_gte=None, lowest_lte=None, category_name=None,
     return 404, {'message': 'product not found'}
 
 
-# @product_controller.get('/{pk}/related', auth=None, response={200: PaginatedProductDataOut, 404: MessageOut})
-# def related_products(request, pk: UUID4, per_page: int = 12, page: int = 1):
-#     try:
-#         product_qs = Product.objects.get(pk=pk)
-#     except Product.DoesNotExist:
-#         return response(status.HTTP_404_NOT_FOUND, {'message': 'Product not found'})
-#
-#     related = product_qs.tags.similar_objects()
-#
-#     if not related:
-#         return response(status.HTTP_404_NOT_FOUND, {"message": "No related products found"})
-#
-#     return response(status.HTTP_200_OK, related, paginated=True, per_page=per_page, page=page)
-
-
 @product_controller.get('/{pk}', response={
     200: ProductDataOut,
     404: MessageOut
@@ -84,17 +67,18 @@ def retrieve_product(request, pk: UUID4):
     201: MessageOut,
     400: MessageOut,
 })
-def create_vendor_products(request, product_in: ProductCreate, is_default: bool, image_in: UploadedFile = File(...)):
+def create_vendor_products(request, product_in: ProductCreate, image_in: UploadedFile = File(...)):
     product_data = product_in.dict()
     vendor_instance = get_object_or_404(Vendor, user=request.auth)
-    product_data.pop('merchant_id')
-    product_data.pop('label_id')
-    product_data.pop('category_id')
+    merchant_instance = product_data.pop('merchant_id')
+    label_instance = product_data.pop('label_id')
+    category_instance = product_data.pop('category_id')
+    is_default = product_data.pop('is_default_image')
     product = Product.objects.create(**product_data, vendor=vendor_instance,
-                                     category_id=product_in.category_id, label_id=product_in.label_id,
-                                     merchant_id=product_in.merchant_id
+                                     category_id=category_instance, label_id=label_instance,
+                                     merchant_id=merchant_instance
                                      )
-    ProductImage.objects.create(image=image_in, product=product, is_default_image=is_default, alt_text=product.name)
+    ProductImage.objects.create(image=f'product/{image_in}', product=product, is_default_image=is_default, alt_text=product.name)
     return 201, {'message': 'product created successfully'}
 
 

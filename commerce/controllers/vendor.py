@@ -59,20 +59,11 @@ def get_vendor(request):
 
 
 @vendor_controller.post('', auth=AuthBearer(), response={
-    200: MessageOut,
-    400: MessageOut
-})
-def edit_vendor_image(request, image_in: UploadedFile = File(...)):
-    Vendor.objects.filter(user=request.auth).update(image=image_in.name)
-    return 200, {'message': 'image edited successfully'}
-
-
-@vendor_controller.put('', auth=AuthBearer(), response={
     200: MessageOut
 })
-def edit_vendor(request, vendor_in: VendorEdit):
+def edit_vendor(request, vendor_in: VendorEdit, image_in: UploadedFile = File(...)):
     vendor_data = vendor_in.dict()
-    Vendor.objects.filter(user=request.auth).update(**vendor_data, user=request.auth)
+    Vendor.objects.filter(user=request.auth).update(**vendor_data, image=f'vendor/{image_in}', user=request.auth)
     return 200, {'message': 'updated successfully'}
 
 

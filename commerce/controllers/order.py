@@ -7,8 +7,8 @@ from django.utils import timezone
 from ninja import Router
 from pydantic import UUID4
 
-from commerce.models import Order, OrderStatus, Item, PromoUsage, Address, Promo, Product
-from commerce.schemas import OrderDataOut, OrderIn, AddressCreate, NoteUpdateDataIn, PromoDataIn
+from commerce.models import Order, OrderStatus, Item, PromoUsage, Address, Promo
+from commerce.schemas import OrderDataOut, OrderIn, NoteUpdateDataIn, PromoDataIn
 from config.utils import status
 from config.utils.permissions import AuthBearer
 from config.utils.schemas import MessageOut

@@ -54,12 +54,16 @@ class EmailAccount(AbstractUser, Entity):
     def __str__(self):
         return self.email
 
+
 class Vendor(Entity):
     user = models.OneToOneField('account.EmailAccount', related_name='vendor', on_delete=models.CASCADE)
     name = models.CharField('name', max_length=255)
     description = RichTextField('description', null=True, blank=True)
     image = models.ImageField('image', upload_to='vendor/')
     slug = models.SlugField('slug')
+    facebook = models.URLField('facebook', max_length=255, blank=True, null=True)
+    instagram = models.URLField('instagram', max_length=255, blank=True, null=True)
+    twitter = models.URLField('twitter', max_length=255, blank=True, null=True)
 
     class Meta:
         verbose_name = 'vendor'

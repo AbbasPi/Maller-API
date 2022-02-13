@@ -20,7 +20,6 @@ class CategoryDataOut(Schema):
 
 CategoryDataOut.update_forward_refs()
 
-
 PromoDataOut = create_schema(Promo, exclude=['created', 'updated', 'active_from', 'active_till'])
 
 VendorDataOut = create_schema(Vendor, exclude=['created', 'updated'])
@@ -53,13 +52,18 @@ class LabelOut(UUIDSchema):
 
 
 class ImageCreate(Schema):
-    image: str
-    alt_text: str = None
+    product_id: UUID4
     is_default_image: bool
+    alt_text: str = None
 
 
 class ProductImageDataOut(UUIDSchema, ImageCreate):
     pass
+
+
+class ImageEdit(Schema):
+    is_default_image: bool
+    alt_text: str
 
 
 class ProductDataOut(UUIDSchema):
@@ -116,6 +120,7 @@ class ProductCreate(Schema):
     category_id: UUID4
     label_id: UUID4
     merchant_id: UUID4
+    is_default_image: bool
 
 
 class CityOut(UUIDSchema):
