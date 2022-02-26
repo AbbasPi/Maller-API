@@ -7,9 +7,9 @@ from ninja.files import UploadedFile
 from pydantic import UUID4
 
 from account.models import Vendor
-from account.schemas import VendorOut, VendorEdit
+from account.schemas import VendorEdit
 from commerce.models import Product
-from commerce.schemas import PaginatedProductDataOut
+from commerce.schemas import PaginatedProductDataOut, VendorDataOut
 from config.utils import status
 from config.utils.permissions import AuthBearer
 from config.utils.schemas import MessageOut
@@ -21,7 +21,7 @@ vendor_controller = Router(tags=['Vendors'])
 
 
 @vendor_controller.get('all', response={
-    200: List[VendorOut],
+    200: List[VendorDataOut],
     404: MessageOut
 })
 def get_vendors(request, q: str = None):
@@ -37,7 +37,7 @@ def get_vendors(request, q: str = None):
 
 
 @vendor_controller.get('{pk}', response={
-    200: VendorOut,
+    200: VendorDataOut,
     404: MessageOut
 })
 def retrieve_vendor(request, pk: UUID4):
@@ -48,7 +48,7 @@ def retrieve_vendor(request, pk: UUID4):
 
 
 @vendor_controller.get('', auth=AuthBearer(), response={
-    200: VendorOut,
+    200: VendorDataOut,
     404: MessageOut
 })
 def get_vendor(request):
@@ -79,10 +79,16 @@ def get_vendor_products(request, per_page: int = 12, page: int = 1):
     return response(status.HTTP_200_OK, product_qs, paginated=True, per_page=per_page, page=page)
 
 
-@vendor_controller.get('vendor/products/{pk}', response={200: PaginatedProductDataOut})
-def get_vendor_products_by_id(request, pk:UUID4, per_page: int = 12, page: int = 1):
+@vendor_controller.get('vendor/products/{pk}', response={
+    200: PaginatedProductDataOut,
+    404: MessageOut
+})
+def get_vendor_products_by_id(request, pk: UUID4, per_page: int = 12, page: int = 1):
     product_qs = Product.objects.filter(vendor__id=pk)
     if not product_qs:
         return response(status.HTTP_404_NOT_FOUND, {"message": "No vendor products found"})
 
     return response(status.HTTP_200_OK, product_qs, paginated=True, per_page=per_page, page=page)
+
+# def statistics():
+#     Order.objects.annotate(vendors=Count('products__vendors')).order_by('-date')

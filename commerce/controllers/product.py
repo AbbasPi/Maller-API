@@ -23,7 +23,7 @@ product_controller = Router(tags=['Products'])
     404: MessageOut
 })
 def all_products(request, lowest_gte=None, lowest_lte=None, category_name=None,
-                 merchant_name=None, vendor_name=None, is_featured=None, label_name=None,
+                 merchant_name=None, vendor_id: UUID4 = None, is_featured=None, label_name=None,
                  search=None, per_page: int = 12, page: int = 1,
                  ):
     products_qs = Product.objects.filter(is_active=True).select_related('category', 'vendor', 'merchant')
@@ -35,8 +35,8 @@ def all_products(request, lowest_gte=None, lowest_lte=None, category_name=None,
         products_qs = products_qs.filter(category__name=category_name)
     if merchant_name:
         products_qs = products_qs.filter(merchant__name=merchant_name)
-    if vendor_name:
-        products_qs = products_qs.filter(vendor__name=vendor_name)
+    if vendor_id:
+        products_qs = products_qs.filter(vendor=vendor_id)
     if is_featured:
         products_qs = products_qs.filter(is_featured=is_featured)
     if label_name:
@@ -78,7 +78,8 @@ def create_vendor_products(request, product_in: ProductCreate, image_in: Uploade
                                      category_id=category_instance, label_id=label_instance,
                                      merchant_id=merchant_instance
                                      )
-    ProductImage.objects.create(image=f'product/{image_in}', product=product, is_default_image=is_default, alt_text=product.name)
+    ProductImage.objects.create(image=f'product/{image_in}', product=product, is_default_image=is_default,
+                                alt_text=product.name)
     return 201, {'message': 'product created successfully'}
 
 

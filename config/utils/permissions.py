@@ -53,3 +53,4 @@ class AuthBearer(HttpBearer):
         user = get_current_user(token)
         if user:
             return user
+

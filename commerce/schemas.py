@@ -58,6 +58,7 @@ class ImageCreate(Schema):
 
 
 class ProductImageDataOut(UUIDSchema, ImageCreate):
+    image: str
     pass
 
 
