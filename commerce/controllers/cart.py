@@ -45,30 +45,35 @@ def add_to_cart(request, item_in: ItemIn):
     return 200, {'message': 'added to cart successfully'}
 
 
-@cart_controller.post('item/reduce/{pk}', auth=AuthBearer(), response={
-    200: MessageOut,
+# @cart_controller.post('item/reduce/{pk}', auth=AuthBearer(), response={
+#     200: MessageOut,
+#     401: MessageOut
+# })
+# def reduce_item_quantity(request, pk: UUID4):
+#     item = get_object_or_404(Item, id=pk, user_id=request.auth, ordered=False)
+#     if item.item_qty <= 1:
+#         item.delete()
+#         return {'message': 'item deleted'}
+#     item.item_qty -= 1
+#     item.save()
+#     return {'message': 'item quantity reduced'}
+
+
+@cart_controller.post('item/change-qty/{pk}', auth=AuthBearer(), response={
+    200: List[ItemDataOut],
     401: MessageOut
 })
-def reduce_item_quantity(request, pk: UUID4):
+def increase_item_quantity(request, pk: UUID4, new_qty: int = None):
     item = get_object_or_404(Item, id=pk, user_id=request.auth, ordered=False)
-    if item.item_qty <= 1:
+    if new_qty < 1:
         item.delete()
         return {'message': 'item deleted'}
-    item.item_qty -= 1
+    item.item_qty = new_qty
     item.save()
-    return {'message': 'item quantity reduced'}
-
-
-@cart_controller.post('item/increase/{pk}', auth=AuthBearer(), response={
-    200: MessageOut,
-    401: MessageOut
-})
-def increase_item_quantity(request, pk: UUID4):
-    item = get_object_or_404(Item, id=pk, user_id=request.auth, ordered=False)
-    item.item_qty += 1
-    item.save()
-    return {'message': 'item quantity increased'}
-
+    cart_items = Item.objects.filter(user=request.auth, ordered=False)
+    if cart_items:
+        return 200, cart_items
+    return 404, {'message': 'no items in the cart'}
 
 @cart_controller.delete('item/delete/{pk}', auth=AuthBearer(), response={
     202: MessageOut,

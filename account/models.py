@@ -44,7 +44,6 @@ class EmailAccount(AbstractUser, Entity):
     address2 = models.CharField(max_length=255, null=True, blank=True)
     company_name = models.CharField(max_length=255, null=True, blank=True)
     company_website = models.CharField(max_length=255, null=True, blank=True)
-
     is_verified = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'

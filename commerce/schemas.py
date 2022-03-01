@@ -10,7 +10,7 @@ from commerce.models import Address, OrderStatus, Promo
 
 
 class CategoryDataOut(Schema):
-    pk: UUID4
+    id: UUID4
     name: str
     description: str
     image: str
@@ -170,7 +170,7 @@ OrderStatusDataOut = create_schema(OrderStatus, exclude=['id', 'created', 'updat
 
 
 class OrderDataOut(Schema):
-    pk: UUID4
+    id: UUID4
     user: AccountOut
     address: AddressOut = None
     order_total: float
@@ -194,3 +194,4 @@ class NoteUpdateDataIn(Schema):
 class PromoDataIn(Schema):
     promo_code: str
     order_id: UUID4
+

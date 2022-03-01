@@ -103,10 +103,11 @@ class TabularProductImage(admin.TabularInline):
 class ProductAdmin(NestedModelAdmin):
     inlines = [TabularProductImage]
     form = select2_modelform(Product)
+
     list_display = (
         'name',
         'pk',
-        'slug',
+        'vendor',
         'category',
         'merchant',
         'is_featured',

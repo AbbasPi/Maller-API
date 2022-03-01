@@ -96,7 +96,8 @@ def checkout(request):
         checkout_order = Order.objects.get(ordered=False, user=request.auth)
     except Order.DoesNotExist:
         return response(status.HTTP_404_NOT_FOUND, {'message': 'Order not found'})
-
+    address = Address.objects.get(user=request.auth)
+    checkout_order.address = address
     if not checkout_order.address:
         return response(status.HTTP_400_BAD_REQUEST, {'message': 'order should have an address assigned'})
 

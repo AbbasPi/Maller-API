@@ -53,7 +53,8 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -141,6 +142,8 @@ SITE_ID = 1
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+CORS_ALLOW_ALL_ORIGINS: True
+
 SILKY_PYTHON_PROFILER = True
 SILKY_PYTHON_PROFILER_BINARY = True
 SILKY_ANALYZE_QUERIES = True
@@ -151,8 +154,6 @@ CORS_ALLOW_ALL_ORIGINS = True
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 60 * 24
 
 AUTH_USER_MODEL = 'account.EmailAccount'
-
-
 
 CKEDITOR_CONFIGS = {
     'default': {
