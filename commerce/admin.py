@@ -5,6 +5,7 @@ from easy_select2 import select2_modelform
 from mptt.admin import DraggableMPTTAdmin
 from nested_inline.admin import NestedModelAdmin
 
+from account.models import Vendor
 from commerce.models import Product, Order, Item, Address, OrderStatus, ProductImage, City, Category, Merchant, \
     Label, ProductRating, VendorRating, Promo, DeliveryMap
 
@@ -138,6 +139,34 @@ class ProductAdmin(NestedModelAdmin):
 
     )
 
+    def get_queryset(self, request):
+        qs = super(ProductAdmin, self).get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(vendor__user=request.user)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if not request.user.is_superuser:
+            if db_field.name == "vendor":
+                kwargs["queryset"] = Vendor.objects.filter(user=request.user.id).distinct()
+            return super().formfield_for_foreignkey(db_field, request, **kwargs)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+    #
+    # def has_add_permission(self, request):
+    #     return request.user.is_superuser or request.user.groups.filter(name='vendors').exists()
+    #
+    # def has_change_permission(self, request, obj=None):
+    #     return request.user.is_superuser or request.user.groups.filter(name='vendors').exists()
+    #
+    # def has_delete_permission(self, request, obj=None):
+    #     return request.user.is_superuser or request.user.groups.filter(name='vendors').exists()
+    #
+    # def has_view_permission(self, request, obj=None):
+    #     return request.user.is_superuser or request.user.groups.filter(name='vendors').exists()
+    #
+    # def has_module_permission(self, request):
+    #     return request.user.is_superuser or request.user.groups.filter(name='vendors').exists()
+
 
 @admin.register(Category)
 class CategoryAdmin(DraggableMPTTAdmin):
@@ -213,6 +242,29 @@ class ProductImageAdmin(admin.ModelAdmin):
 
     )
 
+    def get_queryset(self, request):
+        qs = super(ProductImageAdmin, self).get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        vendor = Vendor.objects.filter(user=request.user).first()
+        product = Product.objects.filter(vendor=vendor)
+        return qs.filter(product__id__in=product)
+
+    # def has_add_permission(self, request):
+    #     return request.user.is_superuser or request.user.groups.filter(name='vendors').exists()
+    #
+    # def has_change_permission(self, request, obj=None):
+    #     return request.user.is_superuser or request.user.groups.filter(name='vendors').exists()
+    #
+    # def has_delete_permission(self, request, obj=None):
+    #     return request.user.is_superuser or request.user.groups.filter(name='vendors').exists()
+    #
+    # def has_view_permission(self, request, obj=None):
+    #     return request.user.is_superuser or request.user.groups.filter(name='vendors').exists()
+    #
+    # def has_module_permission(self, request):
+    #     return request.user.is_superuser or request.user.groups.filter(name='vendors').exists()
+
 
 @admin.register(Label)
 class LabelAdmin(admin.ModelAdmin):
@@ -242,6 +294,15 @@ class PromoAdmin(admin.ModelAdmin):
 class ProductRatingAdmin(admin.ModelAdmin):
     list_display = ('product', 'rate', 'user')
     search_fields = ('rate', 'product', 'user')
+    list_filter = ('rate',)
+
+    def get_queryset(self, request):
+        qs = super(ProductRatingAdmin, self).get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        vendor = Vendor.objects.filter(user=request.user).first()
+        product = Product.objects.filter(vendor=vendor)
+        return qs.filter(product__id__in=product)
 
 
 admin.site.register(VendorRating)

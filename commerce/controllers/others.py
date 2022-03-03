@@ -97,6 +97,17 @@ def get_categories(request):
     return 404, {'message': 'no categories found'}
 
 
+@category_controller.get('{pk}', response={
+    200: List[CategoryDataOut],
+    404: MessageOut
+})
+def retrieve_category(request, pk: UUID4):
+    category_qs = Category.objects.filter(is_active=True, id=pk).filter(parent=None)
+    if category_qs:
+        return 200, category_qs
+    return 404, {'message': 'no categories found'}
+
+
 @category_controller.get('{pk}/products', response={
     200: PaginatedProductDataOut,
     404: MessageOut

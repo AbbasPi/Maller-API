@@ -58,6 +58,10 @@ class Vendor(Entity):
     user = models.OneToOneField('account.EmailAccount', related_name='vendor', on_delete=models.CASCADE)
     name = models.CharField('name', max_length=255)
     description = RichTextField('description', null=True, blank=True)
+    category = models.ForeignKey('commerce.Category', verbose_name='category', related_name='vendors',
+                                 null=True,
+                                 blank=True,
+                                 on_delete=models.SET_NULL)
     image = models.ImageField('image', upload_to='vendor/')
     slug = models.SlugField('slug')
     facebook = models.URLField('facebook', max_length=255, blank=True, null=True)
@@ -70,6 +74,7 @@ class Vendor(Entity):
 
     def __str__(self):
         return self.name
+
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None, *args, **kwargs):

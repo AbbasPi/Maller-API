@@ -23,6 +23,7 @@ class AccountSignupIn(Schema):
     first_name: str
     last_name: str
     email: EmailStr
+    phone: int
     password1: str
     password2: str
 
@@ -40,6 +41,7 @@ class AccountConfirmationIn(Schema):
 class AccountUpdateIn(Schema):
     first_name: str = None
     last_name: str = None
+    email: str = None
     phone_number: str = None
     address1: str = None
     address2: str = None
