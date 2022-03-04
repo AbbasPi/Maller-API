@@ -1,1 +1,1 @@
-web: python start.py --port %PORT%
+web: python manage.py runserver 0.0.0.0:5000
