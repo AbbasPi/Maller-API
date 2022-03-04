@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 import os
 from pathlib import Path
-import django_heroku
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -24,7 +24,7 @@ SECRET_KEY = 'django-insecure-_wzo9*3h54@pmmb&p4$$6d8y)9u1wo%8xfq$wwnj)ntx#@+^4_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['maller-iq.herokuapp.com', '0.0.0.0:8000']
+ALLOWED_HOSTS = ['maller-iq.herokuapp.com', '0.0.0.0:8000', '*']
 
 # Application definition
 
@@ -130,7 +130,7 @@ USE_TZ = False
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 # STATICFILES_DIRS = [os.path.join(BASE_DIR, 'build/static')]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 # STATICFILES_DIRS = [
 #     os.path.join(BASE_DIR, "static"),
 # ]
@@ -154,8 +154,6 @@ CORS_ALLOW_ALL_ORIGINS = True
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 60 * 24
 
 AUTH_USER_MODEL = 'account.EmailAccount'
-
-
 
 CKEDITOR_CONFIGS = {
     'default': {
@@ -221,4 +219,3 @@ CKEDITOR_CONFIGS = {
         ]),
     }
 }
-
