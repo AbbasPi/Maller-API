@@ -24,7 +24,7 @@ SECRET_KEY = 'django-insecure-_wzo9*3h54@pmmb&p4$$6d8y)9u1wo%8xfq$wwnj)ntx#@+^4_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['maller-iq.herokuapp.com', '0.0.0.0:5000']
+ALLOWED_HOSTS = ['maller-iq.herokuapp.com', '0.0.0.0:8000']
 
 # Application definition
 
@@ -130,7 +130,7 @@ USE_TZ = False
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 # STATICFILES_DIRS = [os.path.join(BASE_DIR, 'build/static')]
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # STATICFILES_DIRS = [
 #     os.path.join(BASE_DIR, "static"),
 # ]
