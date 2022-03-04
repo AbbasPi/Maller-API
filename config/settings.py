@@ -22,9 +22,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-_wzo9*3h54@pmmb&p4$$6d8y)9u1wo%8xfq$wwnj)ntx#@+^4_'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['maller-api.herokuapp.com', '0.0.0.0:5000']
 
 # Application definition
 
