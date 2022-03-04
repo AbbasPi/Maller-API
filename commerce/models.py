@@ -244,8 +244,7 @@ class PromoUsage(Entity):
     promo = models.ForeignKey(Promo, null=True, blank=True, on_delete=models.SET_NULL)
 
 
-class Category(MPTTModel):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+class Category(MPTTModel, Entity):
     parent = TreeForeignKey('self', verbose_name='parent', related_name='children',
                             null=True,
                             blank=True,
