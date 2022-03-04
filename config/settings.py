@@ -24,7 +24,7 @@ SECRET_KEY = 'django-insecure-_wzo9*3h54@pmmb&p4$$6d8y)9u1wo%8xfq$wwnj)ntx#@+^4_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['maller-api.herokuapp.com', '0.0.0.0:5000']
+ALLOWED_HOSTS = ['maller-iq.herokuapp.com', '0.0.0.0:5000']
 
 # Application definition
 
