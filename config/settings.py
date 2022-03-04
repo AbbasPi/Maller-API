@@ -155,21 +155,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 60 * 24
 
 AUTH_USER_MODEL = 'account.EmailAccount'
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-             'level': os.getenv('DJANGO_LOG_LEVEL', 'DEBUG'),
-        },
-    },
-}
+
 
 CKEDITOR_CONFIGS = {
     'default': {
@@ -236,4 +222,3 @@ CKEDITOR_CONFIGS = {
     }
 }
 
-django_heroku.settings(locals())
